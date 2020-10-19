@@ -46,65 +46,66 @@
 #### （1）数据结构
 
 ```cpp
-#define MAXVEX 50   //最大顶点个数
+#define MAXVEX 50        //最大顶点个数
 #define MAXWEIGHT 5000   //最大权值
-typedef struct{    
+
+typedef struct {
     int no;         //景点编号
     char name[20];  //景点名称
     char desc[100]; //景点简介
-} DataType;         //景点信息结构体
-
+} VexType;         //景点结构体
 typedef int weight; //权值
 typedef struct {
     weight arcs[MAXVEX][MAXVEX]; //邻接矩阵
-    DataType data[MAXVEX];       //顶点信息
-    int vexs;                    //顶点数
-} MGraph, *AdjMetrix;
+    VexType vex[MAXVEX];       //顶点信息
+    int vexNum;                    //顶点数
+} MGraph, * AdjMatrix;
 ```
 #### （2）操作实现
 
 - 根据景点名称查询景点信息
 ```cpp
-void QueryVex(AdjMetrix g, char name[]) {
+void queryVexDesc(AdjMatrix graph, char name[]) {
     int i;
-    for (i = 0; i < g->vexs; i++){
-        if (!strcmp(name, g->data[i].name)) {
-            system("cls");
-            printf("景点编号：[%d],景点名称：%s\n简介：\n------\n%s\n\n",g->data[i].no, g->data[i].name, g->data[i].desc);
+    for (i = 0; i < graph->vexNum; i++) {
+        if (!strcmp(name, graph->vex[i].name)) {
+            system("cls");    //清屏
+            printf("景点编号：[%d],景点名称：%s\n简介：\n------\n%s\n\n", graph->vex[i].no, graph->vex[i].name, graph->vex[i].desc);
             return;
         }
     }
-    printf("输入错误，请检查后重新操作\n\n");     
+    printf("输入错误，请检查后重新操作\n\n");
 }
+
 ```
 - 根据景点名称查找景点序号
 ```cpp
-int Locate(AdjMetrix g, char name[]) {
+int queryVexNo(AdjMatrix graph, char name[]) {
     int i;
-    for (i = 0; i < g->vexs; i++)
-        if (!strcmp(name, g->data[i].name))
+    for (i = 0; i < graph->vexNum; i++)
+        if (!strcmp(name, graph->vex[i].name))
             return i;
     return -1;
 }
 ```
 - 迪杰斯特拉算法求最短路径
 ```cpp
-void Dijstra(AdjMetrix g, int v, int dis[], int path[]) {
+void dijkstra(AdjMatrix graph, int v, int dis[], int path[]) {
     int vset[MAXVEX];
     int MinDis, i, j, w;
-    for (i = 0; i < g->vexs; i++) {
+    for (i = 0; i < graph->vexNum; i++) {
         vset[i] = 1;
-        dis[i] = g->arcs[v][i];
-        if (g->arcs[v][i] < MAXWEIGHT)
+        dis[i] = graph->arcs[v][i];
+        if (graph->arcs[v][i] < MAXWEIGHT)
             path[i] = v;
         else
             path[i] = -1;
     }
     vset[v] = 0;
     path[v] = 0;
-    for (i = 1; i < g->vexs; i++) {
+    for (i = 1; i < graph->vexNum; i++) {
         MinDis = MAXWEIGHT;
-        for (j = 0; j < g->vexs; j++)
+        for (j = 0; j < graph->vexNum; j++)
             if (vset[j] && dis[j] < MinDis) {
                 w = j;
                 MinDis = dis[j];
@@ -112,9 +113,9 @@ void Dijstra(AdjMetrix g, int v, int dis[], int path[]) {
         if (MinDis == MAXWEIGHT)
             return;
         vset[w] = 0;
-        for (j = 0; j < g->vexs; j++) {
-            if (vset[j] && g->arcs[w][j] < MAXWEIGHT &&dis[w] + g->arcs[w][j] < dis[j]) {
-                dis[j] = dis[w] + g->arcs[w][j];
+        for (j = 0; j < graph->vexNum; j++) {
+            if (vset[j] && graph->arcs[w][j] < MAXWEIGHT && dis[w] + graph->arcs[w][j] < dis[j]) {
+                dis[j] = dis[w] + graph->arcs[w][j];
                 path[j] = w;
             }
         }
@@ -123,23 +124,23 @@ void Dijstra(AdjMetrix g, int v, int dis[], int path[]) {
 ```
 - 显示最短路径
 ```cpp
-void DispPath(AdjMetrix g, int path[], int dis[], int start, int end) {
+void dispPath(AdjMatrix graph, int path[], int dis[], int start, int end) {
     int top = -1;
-    DataType base[MAXVEX];
+    VexType base[MAXVEX];
     int pos;
-    DataType x;
+    VexType vex;
     pos = path[end];
     while (pos != start) {
-        base[++top] = g->data[pos];
+        base[++top] = graph->vex[pos];
         pos = path[pos];
     }
-    base[++top] = g->data[start];
-    printf("从[%s]到[%s]的最佳路径为：", g->data[start].name,g->data[end].name);
+    base[++top] = graph->vex[start];
+    printf("从[%s]到[%s]的最佳路径为：", graph->vex[start].name, graph->vex[end].name);
     while (top != -1) {
-        x = base[top--];
-        printf("%s->", x.name);
+        vex = base[top--];
+        printf("%s->", vex.name);
     }
-    printf("%s", g->data[end].name);
+    printf("%s", graph->vex[end].name);
     printf("\n此路径长为%d米,大约需要走%d分钟\n\n", dis[end], dis[end] / 60);
 }
 ```
