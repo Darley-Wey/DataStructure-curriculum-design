@@ -1,59 +1,51 @@
-#include "malloc.h"
-#include "stdio.h"
-#include "string.h"
-#include "stdlib.h"
+#include <malloc.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
-#define MAXVEX 50        //×î´ó¶¥µã¸öÊı
-#define MAXWEIGHT 5000   //×î´óÈ¨Öµ
-typedef struct{    
-    int no;         //¾°µã±àºÅ
-    char name[20];  //¾°µãÃû³Æ
-    char desc[100]; //¾°µã¼ò½é
-} DataType;         //¾°µã½á¹¹Ìå
-typedef int weight; //È¨Öµ
+#define MAXVEX 50        //æœ€å¤§é¡¶ç‚¹ä¸ªæ•°
+#define MAXWEIGHT 5000   //æœ€å¤§æƒå€¼
+
 typedef struct {
-    weight arcs[MAXVEX][MAXVEX]; //ÁÚ½Ó¾ØÕó
-    DataType data[MAXVEX];       //¶¥µãĞÅÏ¢
-    int vexs;                    //¶¥µãÊı
-} MGraph, *AdjMetrix;
+    int no;         //æ™¯ç‚¹ç¼–å·
+    char name[20];  //æ™¯ç‚¹åç§°
+    char desc[100]; //æ™¯ç‚¹ç®€ä»‹
+} VexType;         //æ™¯ç‚¹ç»“æ„ä½“
+typedef int weight; //æƒå€¼
+typedef struct {
+    weight arcs[MAXVEX][MAXVEX]; //é‚»æ¥çŸ©é˜µ
+    VexType vex[MAXVEX];       //é¡¶ç‚¹ä¿¡æ¯
+    int vexNum;                    //é¡¶ç‚¹æ•°
+} MGraph, * AdjMatrix;
 
-/*´´½¨ÁÚ½Ó¾ØÕó*/
-void CreateGraph(AdjMetrix g, int m[][MAXVEX], DataType d[], int n) {
+/*åˆ›å»ºé‚»æ¥çŸ©é˜µ*/
+void createGraph(AdjMatrix graph, int edge[][MAXVEX], VexType vex[], int vexNum) {
     int i, j;
-    g->vexs = n;
-    for (i = 0; i < n; i++) {
-        g->data[i] = d[i];
-        for (j = 0; j < n; j++)
-            g->arcs[i][j] = m[i][j];
+    graph->vexNum = vexNum;
+    for (i = 0; i < vexNum; i++) {
+        graph->vex[i] = vex[i];
+        for (j = 0; j < vexNum; j++)
+            graph->arcs[i][j] = edge[i][j];
     }
 }
 
-/*¸ø¶¥µã¸³Öµ*/
-void PutVex(AdjMetrix g, int k, DataType x) {
-    if (k < 0 || k > g->vexs) {
-        printf("²ÎÊık³¬³ö·¶Î§£¡\n");
-        return;
-    }
-    g->data[k] = x;
-}
-
-/*µÏ½ÜË¹ÌØÀ­Ëã·¨Çó×î¶ÌÂ·¾¶*/
-void Dijstra(AdjMetrix g, int v, int dis[], int path[]) {
+/*è¿ªæ°æ–¯ç‰¹æ‹‰ç®—æ³•æ±‚æœ€çŸ­è·¯å¾„*/
+void dijkstra(AdjMatrix graph, int v, int dis[], int path[]) {
     int vset[MAXVEX];
     int MinDis, i, j, w;
-    for (i = 0; i < g->vexs; i++) {
+    for (i = 0; i < graph->vexNum; i++) {
         vset[i] = 1;
-        dis[i] = g->arcs[v][i];
-        if (g->arcs[v][i] < MAXWEIGHT)
+        dis[i] = graph->arcs[v][i];
+        if (graph->arcs[v][i] < MAXWEIGHT)
             path[i] = v;
         else
             path[i] = -1;
     }
     vset[v] = 0;
     path[v] = 0;
-    for (i = 1; i < g->vexs; i++) {
+    for (i = 1; i < graph->vexNum; i++) {
         MinDis = MAXWEIGHT;
-        for (j = 0; j < g->vexs; j++)
+        for (j = 0; j < graph->vexNum; j++)
             if (vset[j] && dis[j] < MinDis) {
                 w = j;
                 MinDis = dis[j];
@@ -61,111 +53,111 @@ void Dijstra(AdjMetrix g, int v, int dis[], int path[]) {
         if (MinDis == MAXWEIGHT)
             return;
         vset[w] = 0;
-        for (j = 0; j < g->vexs; j++) {
-            if (vset[j] && g->arcs[w][j] < MAXWEIGHT &&dis[w] + g->arcs[w][j] < dis[j]) {
-                dis[j] = dis[w] + g->arcs[w][j];
+        for (j = 0; j < graph->vexNum; j++) {
+            if (vset[j] && graph->arcs[w][j] < MAXWEIGHT && dis[w] + graph->arcs[w][j] < dis[j]) {
+                dis[j] = dis[w] + graph->arcs[w][j];
                 path[j] = w;
             }
         }
     }
 }
 
-/*ÏÔÊ¾×î¶ÌÂ·¾¶*/
-void DispPath(AdjMetrix g, int path[], int dis[], int start, int end) {
+/*æ˜¾ç¤ºæœ€çŸ­è·¯å¾„*/
+void dispPath(AdjMatrix graph, int path[], int dis[], int start, int end) {
     int top = -1;
-    DataType base[MAXVEX];
+    VexType base[MAXVEX];
     int pos;
-    DataType x;
+    VexType vex;
     pos = path[end];
     while (pos != start) {
-        base[++top] = g->data[pos];
+        base[++top] = graph->vex[pos];
         pos = path[pos];
     }
-    base[++top] = g->data[start];
-    printf("´Ó[%s]µ½[%s]µÄ×î¼ÑÂ·¾¶Îª£º", g->data[start].name,g->data[end].name);
+    base[++top] = graph->vex[start];
+    printf("ä»[%s]åˆ°[%s]çš„æœ€ä½³è·¯å¾„ä¸ºï¼š", graph->vex[start].name, graph->vex[end].name);
     while (top != -1) {
-        x = base[top--];
-        printf("%s->", x.name);
+        vex = base[top--];
+        printf("%s->", vex.name);
     }
-    printf("%s", g->data[end].name);
-    printf("\n´ËÂ·¾¶³¤Îª%dÃ×,´óÔ¼ĞèÒª×ß%d·ÖÖÓ\n\n", dis[end], dis[end] / 60);
+    printf("%s", graph->vex[end].name);
+    printf("\næ­¤è·¯å¾„é•¿ä¸º%dç±³,å¤§çº¦éœ€è¦èµ°%dåˆ†é’Ÿ\n\n", dis[end], dis[end] / 60);
 }
 
-/*¸ù¾İ¾°µãÃû³Æ²éÑ¯¾°µãĞòºÅ*/
-int Locate(AdjMetrix g, char name[]) {
+/*æ ¹æ®æ™¯ç‚¹åç§°æŸ¥è¯¢æ™¯ç‚¹åºå·*/
+int queryVexNo(AdjMatrix graph, char name[]) {
     int i;
-    for (i = 0; i < g->vexs; i++)
-        if (!strcmp(name, g->data[i].name))
+    for (i = 0; i < graph->vexNum; i++)
+        if (!strcmp(name, graph->vex[i].name))
             return i;
     return -1;
 }
 
-/*¸ù¾İ¾°µãÃû³Æ²éÑ¯¾°µãĞÅÏ¢*/
-void QueryVex(AdjMetrix g, char name[]) {
+/*æ ¹æ®æ™¯ç‚¹åç§°æŸ¥è¯¢æ™¯ç‚¹ä¿¡æ¯*/
+void queryVexDesc(AdjMatrix graph, char name[]) {
     int i;
-    for (i = 0; i < g->vexs; i++){
-        if (!strcmp(name, g->data[i].name)) {
-            system("cls");    //ÇåÆÁ
-            printf("¾°µã±àºÅ£º[%d],¾°µãÃû³Æ£º%s\n¼ò½é£º\n------\n%s\n\n",g->data[i].no, g->data[i].name, g->data[i].desc);
+    for (i = 0; i < graph->vexNum; i++) {
+        if (!strcmp(name, graph->vex[i].name)) {
+            system("cls");    //æ¸…å±
+            printf("æ™¯ç‚¹ç¼–å·ï¼š[%d],æ™¯ç‚¹åç§°ï¼š%s\nç®€ä»‹ï¼š\n------\n%s\n\n", graph->vex[i].no, graph->vex[i].name, graph->vex[i].desc);
             return;
         }
     }
-    printf("ÊäÈë´íÎó£¬Çë¼ì²éºóÖØĞÂ²Ù×÷\n\n");     
+    printf("è¾“å…¥é”™è¯¯ï¼Œè¯·æ£€æŸ¥åé‡æ–°æ“ä½œ\n\n");
 }
 
-/*»¶Ó­Ò³*/
-void welcome(AdjMetrix g){
+/*æ¬¢è¿é¡µ*/
+void welcome(AdjMatrix graph) {
     int i;
-    printf("»¶Ó­À´µ½ºÓ±±¿Æ¼¼´óÑ§£¬¾°µãÁĞ±íÈçÏÂ£º\n");
-    for (i = 0; i < g->vexs; i++)
-        printf("¾°µã±àºÅ£º[%d],¾°µãÃû³Æ£º%s\n", g->data[i].no, g->data[i].name);
+    printf("æ¬¢è¿æ¥åˆ°æ²³åŒ—ç§‘æŠ€å¤§å­¦ï¼Œæ™¯ç‚¹åˆ—è¡¨å¦‚ä¸‹ï¼š\n");
+    for (i = 0; i < graph->vexNum; i++)
+        printf("æ™¯ç‚¹ç¼–å·ï¼š[%d],æ™¯ç‚¹åç§°ï¼š%s\n", graph->vex[i].no, graph->vex[i].name);
 }
 
-/*ÔÙ¼ûÒ³*/
-void goodbye(){
+/*å†è§é¡µ*/
+void goodbye() {
     system("cls");
-    printf("Ğ»Ğ»Ê¹ÓÃ£¬ÏÂ´ÎÔÙ¼û\n\n\n");
+    printf("è°¢è°¢ä½¿ç”¨ï¼Œä¸‹æ¬¡å†è§\n\n\n");
     system("pause");
     exit(0);
 }
 
-/*Ö÷º¯Êı*/
-int main(int argc, char *argv[]) {
+/*ä¸»å‡½æ•°*/
+int main() {
     MGraph gg;
-    AdjMetrix g = &gg;
+    AdjMatrix campus = &gg;
 
-    /*¾°µãĞÅÏ¢Êı×é£¬Ä¬ÈÏÊ¹ÓÃÍâ²¿ÎÄ¼ş»ñÈ¡¾°µãĞÅÏ¢
-    DataType d[] = {
-        {1, "Ğ£ÃûÊ¯", "Õı¶ÔÑ§Ğ£¶«´óÃÅµÄ¾ŞÊ¯£¬ÉÏ¿ÌÓĞĞ£Ãû£¬ÆøÊÆºêÎ°¡£"},
-        {2,"ÒøĞÓÊ÷ÁÖ","Ñ§Ğ£¶«´óÃÅ±±²àµÄÒøĞÓÊ÷ÁÖ£¬Çï¼¾ÂäÒ¶Ê±½Ú±ØÈ¥µÄÃÀÀö¾°µã¡£"}, 
-        {3,"Ö÷ÌåÓı³¡", "ÓµÓĞÊıÇ§ÈË¿´Ì¨µÄ×¨ÒµÌåÓı³¡£¬×ãÇò±ÈÈü¾Ù°ìµØ¡£"}, 
-        {4, "¿×È¸Ô°","Ñ§Ğ£×îÃû¹óµÄ¶¯Îï¿×È¸µÄ¼Ò£¬ÓµÓĞ¶à¸öÆ·ÖÖÊıÖ»¿×È¸¡£"}, 
-        {5, "·çÓê²Ù³¡","ÊÒÄÚÌåÓı³¡ËùÔÚµØ£¬ÉèÓĞÀºÇò¡¢ÅÅÇò¡¢ÓğÃ«ÇòµÈÌåÓıÉèÊ©¡£"}, 
-        {6, "Ê±¼ä¹ã³¡","Í¼Êé¹İÇ°µÄ¾Ş´óÏÂ³ÁÊ½¹ã³¡£¬²»¶¨Ê±¾Ù°ìÒôÀÖÅçÈª±íÑİ¡£"}, 
-        {7,"Í¼Êé¹İ","Ñ§Ğ£±êÖ¾ĞÔ½¨Öş£¬ĞÅÏ¢×ÊÔ´ÖĞĞÄ£¬Ñ§Ï°Ê¥µØ¡£"}, 
-        {8, "ÄÁĞÇºş","Ñ§Ğ£ÈË¹¤ºş£¬×î´óÈËÎÄ¾°¹ÛËùÔÚµØ£¬ºşË®Çå³º£¬ÂÌÁø³ÉÒñ¡£"}, 
-        {9, "¶şÔÂÀ¼Ô°","¾Ş´óµÄ¶şÔÂÀ¼»¨Ô°£¬Ê¢¿ªÊ±Ò»Æ¬×ÏÉ«»¨º££¬ºÃ²»×³¹Û¡£"},
-        {10,"´óÑ§ÉÌ³Ç","Ñ§Ğ£ÄÏÃÅµÄÉÌÒµÖĞĞÄ£¬ÃÀÊ³·şÎñÒ»Ìõ½Ö£¬³ÔºÈÍæÀÖ±ØÈ¥¡£"}
+    /*æ™¯ç‚¹ä¿¡æ¯æ•°ç»„ï¼Œé»˜è®¤ä½¿ç”¨å¤–éƒ¨æ–‡ä»¶è·å–æ™¯ç‚¹ä¿¡æ¯
+    VexType vex[] = {
+        {1, "æ ¡åçŸ³", "æ­£å¯¹å­¦æ ¡ä¸œå¤§é—¨çš„å·¨çŸ³ï¼Œä¸Šåˆ»æœ‰æ ¡åï¼Œæ°”åŠ¿å®ä¼Ÿã€‚"},
+        {2,"é“¶ææ ‘æ—","å­¦æ ¡ä¸œå¤§é—¨åŒ—ä¾§çš„é“¶ææ ‘æ—ï¼Œç§‹å­£è½å¶æ—¶èŠ‚å¿…å»çš„ç¾ä¸½æ™¯ç‚¹ã€‚"},
+        {3,"ä¸»ä½“è‚²åœº", "æ‹¥æœ‰æ•°åƒäººçœ‹å°çš„ä¸“ä¸šä½“è‚²åœºï¼Œè¶³çƒæ¯”èµ›ä¸¾åŠåœ°ã€‚"},
+        {4, "å­”é›€å›­","å­¦æ ¡æœ€åè´µçš„åŠ¨ç‰©å­”é›€çš„å®¶ï¼Œæ‹¥æœ‰å¤šä¸ªå“ç§æ•°åªå­”é›€ã€‚"},
+        {5, "é£é›¨æ“åœº","å®¤å†…ä½“è‚²åœºæ‰€åœ¨åœ°ï¼Œè®¾æœ‰ç¯®çƒã€æ’çƒã€ç¾½æ¯›çƒç­‰ä½“è‚²è®¾æ–½ã€‚"},
+        {6, "æ—¶é—´å¹¿åœº","å›¾ä¹¦é¦†å‰çš„å·¨å¤§ä¸‹æ²‰å¼å¹¿åœºï¼Œä¸å®šæ—¶ä¸¾åŠéŸ³ä¹å–·æ³‰è¡¨æ¼”ã€‚"},
+        {7,"å›¾ä¹¦é¦†","å­¦æ ¡æ ‡å¿—æ€§å»ºç­‘ï¼Œä¿¡æ¯èµ„æºä¸­å¿ƒï¼Œå­¦ä¹ åœ£åœ°ã€‚"},
+        {8, "ç‰§æ˜Ÿæ¹–","å­¦æ ¡äººå·¥æ¹–ï¼Œæœ€å¤§äººæ–‡æ™¯è§‚æ‰€åœ¨åœ°ï¼Œæ¹–æ°´æ¸…æ¾ˆï¼Œç»¿æŸ³æˆè«ã€‚"},
+        {9, "äºŒæœˆå…°å›­","å·¨å¤§çš„äºŒæœˆå…°èŠ±å›­ï¼Œç››å¼€æ—¶ä¸€ç‰‡ç´«è‰²èŠ±æµ·ï¼Œå¥½ä¸å£®è§‚ã€‚"},
+        {10,"å¤§å­¦å•†åŸ","å­¦æ ¡å—é—¨çš„å•†ä¸šä¸­å¿ƒï¼Œç¾é£ŸæœåŠ¡ä¸€æ¡è¡—ï¼Œåƒå–ç©ä¹å¿…å»ã€‚"}
     };
     */
-   /*Ê¹ÓÃÍâ²¿ÎÄ¼ş»ñÈ¡¾°µãĞÅÏ¢£¬ÕÒ²»µ½Ê±Çë×¢ÊÍÒÔÏÂ²¿·ÖµÄ´úÂë£¬²¢Ê¹ÓÃÉÏ·½´úÂëÊ¹ÓÃÄÚ²¿¾°µãĞÅÏ¢*/
-    DataType d[10];
+    /*ä½¿ç”¨å¤–éƒ¨æ–‡ä»¶è·å–æ™¯ç‚¹ä¿¡æ¯ï¼Œæ‰¾ä¸åˆ°æ—¶è¯·æ³¨é‡Šä»¥ä¸‹éƒ¨åˆ†çš„ä»£ç ï¼Œå¹¶ä½¿ç”¨ä¸Šæ–¹ä»£ç ä½¿ç”¨å†…éƒ¨æ™¯ç‚¹ä¿¡æ¯*/
+    VexType vex[10];
     int i = 0;
-    FILE *fp;
-    if ((fp = fopen("DataType.txt", "r")) == NULL) // ´ò¿ªÎÄ¼ş²¢ÇÒÈÃfpÖ¸ÏòÎÄ¼ş
+    FILE* fp;
+    if ((fp = fopen("VexType.txt", "r")) == NULL) // æ‰“å¼€æ–‡ä»¶å¹¶ä¸”è®©fpæŒ‡å‘æ–‡ä»¶
     {
-        printf("¾°µãĞÅÏ¢ÎÄ¼ş²»´æÔÚ£¬Çë¼ì²é\n\n");
+        printf("æ™¯ç‚¹ä¿¡æ¯æ–‡ä»¶ä¸å­˜åœ¨ï¼Œè¯·æ£€æŸ¥\n\n");
         system("pause");
         exit(1);
     }
-    while (!feof(fp)) //¶ÁÈ¡Ò»×éÊı¾İºóÖ¸ÕëÖ¸ÏòÏÂÒ»×éÊı¾İ£¬²¢ÇÒÅĞ¶ÏÊÇ·ñÖ¸Ïò×îºóÒ»ĞĞ
+    while (!feof(fp)) //è¯»å–ä¸€ç»„æ•°æ®åæŒ‡é’ˆæŒ‡å‘ä¸‹ä¸€ç»„æ•°æ®ï¼Œå¹¶ä¸”åˆ¤æ–­æ˜¯å¦æŒ‡å‘æœ€åä¸€è¡Œ
     {
-        fscanf(fp, "%d %s %s\n", &d[i].no, &d[i].name, &d[i].desc);
+        fscanf(fp, "%d %s %s\n", &vex[i].no, &vex[i].name, &vex[i].desc);
         i++;
     }
-    fclose(fp); //¹Ø±ÕÎÄ¼ş£»
+    fclose(fp); //å…³é—­æ–‡ä»¶ï¼›
 
-    int m[][MAXVEX] = {
+    int edge[][MAXVEX] = {
         {MAXWEIGHT, 60, 400, MAXWEIGHT, MAXWEIGHT, 400,MAXWEIGHT, MAXWEIGHT, MAXWEIGHT, MAXWEIGHT},
         {60, MAXWEIGHT, MAXWEIGHT, MAXWEIGHT, MAXWEIGHT,MAXWEIGHT, MAXWEIGHT, MAXWEIGHT, MAXWEIGHT, MAXWEIGHT},
         {400, MAXWEIGHT, MAXWEIGHT, 200, 300, MAXWEIGHT,MAXWEIGHT, MAXWEIGHT, MAXWEIGHT, MAXWEIGHT},
@@ -180,53 +172,53 @@ int main(int argc, char *argv[]) {
 
     int dis[5], path[MAXVEX];
     int  start, end;
-    char vname[20];
-    DataType x;
-    CreateGraph(g, m, d, 10);    //´´½¨ÁÚ½Ó¾ØÕó
+    char vexName[20];
+    int vexNum = 10;
+    createGraph(campus, edge, vex, vexNum);    //åˆ›å»ºé‚»æ¥çŸ©é˜µ
 
     do {
         printf("*************************************************\n");
-        printf("*	ºÓ±±¿Æ¼¼´óÑ§Ğ£Ô°µ¼ÓÎÏµÍ³		*\n");
+        printf("*	æ²³åŒ—ç§‘æŠ€å¤§å­¦æ ¡å›­å¯¼æ¸¸ç³»ç»Ÿ		*\n");
         printf("*-----------------------------------------------*\n");
-        printf("*	1.²éÑ¯¾°µãĞÅÏ¢ 				*\n");
-        printf("*	2.²éÑ¯¾°µã¼äµÄ×î¶ÌÂ·Ïß                  *\n");
-        printf("*	0.ÍË³öÏµÍ³				*\n");
+        printf("*	1.æŸ¥è¯¢æ™¯ç‚¹ä¿¡æ¯ 				*\n");
+        printf("*	2.æŸ¥è¯¢æ™¯ç‚¹é—´çš„æœ€çŸ­è·¯çº¿                  *\n");
+        printf("*	0.é€€å‡ºç³»ç»Ÿ				*\n");
         printf("*************************************************\n");
-        printf("\nÇëÑ¡ÔñÄãÒªÊ¹ÓÃµÄ¹¦ÄÜ(1,2,0):");     //Ö÷³ÌĞò²Ëµ¥
+        printf("\nè¯·é€‰æ‹©ä½ è¦ä½¿ç”¨çš„åŠŸèƒ½(1,2,0):");     //ä¸»ç¨‹åºèœå•
         int choice = -1;
-        fflush(stdin);    //Çå¿ÕÊäÈë»º´æÇø
+        fflush(stdin);    //æ¸…ç©ºè¾“å…¥ç¼“å­˜åŒº
         scanf("%d", &choice);
-        
+
         switch (choice) {
         case 1:
-            system("cls");
-            welcome(g);
-            printf("\nÇëÊäÈë¾°µãÃû×Ö:");
-            scanf("%s", vname);
-            QueryVex(g, vname);
-            break;
+        system("cls");
+        welcome(campus);
+        printf("\nè¯·è¾“å…¥æ™¯ç‚¹åå­—:");
+        scanf("%s", vexName);
+        queryVexDesc(campus, vexName);
+        break;
         case 2:
+        system("cls");
+        welcome(campus);
+        printf("\nè¯·è¾“å…¥ä½ çš„å‡ºå‘æ™¯ç‚¹åç§°:");
+        scanf("%s", vexName);
+        start = queryVexNo(campus, vexName);
+        printf("è¯·è¾“å…¥ä½ çš„ç›®çš„æ™¯ç‚¹åç§°:");
+        scanf("%s", vexName);
+        end = queryVexNo(campus, vexName);
+        if (start == end || start == -1 || end == -1)
+            printf("è¾“å…¥é”™è¯¯ï¼Œè¯·æ£€æŸ¥åé‡æ–°æ“ä½œ\n\n");
+        else if (start != -1 && end != -1) {
             system("cls");
-            welcome(g);
-            printf("\nÇëÊäÈëÄãµÄ³ö·¢¾°µãÃû³Æ:");
-            scanf("%s", vname);
-            start = Locate(g, vname);
-            printf("ÇëÊäÈëÄãµÄÄ¿µÄ¾°µãÃû³Æ:");
-            scanf("%s", vname);
-            end = Locate(g, vname);
-            if (start == end||start == -1 || end == -1)
-                printf("ÊäÈë´íÎó£¬Çë¼ì²éºóÖØĞÂ²Ù×÷\n\n");
-            else if (start != -1 && end != -1) {
-                system("cls");
-                Dijstra(g, start, dis, path);
-                DispPath(g, path, dis, start, end);
-            }
-            break;
+            dijkstra(campus, start, dis, path);
+            dispPath(campus, path, dis, start, end);
+        }
+        break;
         case 0:
-            goodbye( );
-        default :
-            printf("ÊäÈë´íÎó£¬Çë¼ì²éºóÖØĞÂ²Ù×÷\n\n");
-            break;
+        goodbye();
+        default:
+        printf("è¾“å…¥é”™è¯¯ï¼Œè¯·æ£€æŸ¥åé‡æ–°æ“ä½œ\n\n");
+        break;
         }
     } while (1);
     return 0;
